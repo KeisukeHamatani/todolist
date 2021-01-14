@@ -18,21 +18,17 @@ const List = (props) => {
   return props.todolist.map((todo) => {
     return (
       <div key={todo.key}>
-        <form >     
-          <div>
-            <li key={todo.key}>
-              {todo.task}
-            </li>
-          </div>
-          <div>
-            <input type="checkbox" name="did" onChange={() => props.onChange(todo.key)} />
-            <label htmlFor="did">完了</label>
-          </div >
-        </form>
         <div>
-          <button onClick={() => (props.onClick(todo.key))} >
-            削除
-          </button>
+          <li key={todo.key}>
+            {todo.task}
+          </li>
+          <input type="checkbox" name="did" onChange={() => props.onChange(todo.key)} />
+          <label htmlFor="did">完了</label>
+          {todo.checked ?
+            <button onClick={() => (props.onClick(todo.key))} >
+              削除
+            </button>
+            : null}
         </div>
       </div>
     );
@@ -44,28 +40,22 @@ class TodoList extends React.Component {
     super(props);
     this.state = {
       todolist: [],       //task配列
-      index: 0,           //入力順インデックス
       inputtext: "",      //テキストボックス入力文字
     };
   }
 
   handleClick() {
-    /* 現在のtask配列を保持 */
-    const tmp_todolist = this.state.todolist.slice(0, this.state.index + 1);
-    const tmp_index = this.state.index;
-
     /* nullまたはから文字でない場合 */
     if (this.state.inputtext) {
       /* todolistを更新 */
-      const new_task = {
+      const task = {
         task: this.state.inputtext,
         checked: false,
-        key: this.state.index,
+        key: Date.now(),    //要素ごとにキーとしてDate.now()(現在時刻ms)をもつ
       };
       this.setState({
-        todolist: tmp_todolist.concat(new_task),
+        todolist: this.state.todolist.concat(task),
         inputtext: "",
-        index: tmp_index + 1,
       });
     }
 
@@ -80,26 +70,28 @@ class TodoList extends React.Component {
     });
   }
 
-  handleChange_Checkbox(key) {
-    const tmp_todolist = this.state.todolist;
-    tmp_todolist[key].checked = !tmp_todolist[key].checked;
+  handleChangeCheckbox(key) {
     /* チェックボックスを更新をtodolistへ反映 */
-    this.setState({
-      todolist: tmp_todolist
-    });
+    const todolist = this.state.todolist.map((todo) => {
+      if( todo.key === key ){
+      /* キーが一致する要素のcheckedを更新する */
+      const task = {
+        task: todo.task,
+        checked: !todo.checked,
+        key: todo.key
+      };
+        return task;
+      } else {
+        return todo;
+      }});
+    this.setState({ todolist });
+
     console.log(this.state.todolist);
   }
 
-  handleClcik_Checkbox(key) {
-    const tmp_todolist = this.state.todolist;
-    /* チェックボックスにチェックがついていれば、削除ボタンで削除可能にする */
-    if (tmp_todolist[key].checked === true) {
-      delete tmp_todolist[key];
-      this.setState({
-        todolist: tmp_todolist
-      });
-      console.log(this.state.todolist);
-    }
+  handleClcikCheckbox(key) {
+    /* todolistから要素を削除 */
+    this.setState({ todolist: this.state.todolist.filter(todo => todo.key !== key) })
   }
 
   render() {
@@ -112,8 +104,8 @@ class TodoList extends React.Component {
         />
         <List
           todolist={this.state.todolist}
-          onChange={(key) => { this.handleChange_Checkbox(key) }}
-          onClick={(key) => { this.handleClcik_Checkbox(key) }}
+          onChange={(key) => { this.handleChangeCheckbox(key) }}
+          onClick={(key) => { this.handleClcikCheckbox(key) }}
         />
       </div>
     );
